@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
+import { Alert } from 'react-native';
 import { Header } from '../../components/Header';
 import { LoginDataItem } from '../../components/LoginDataItem';
 import { SearchBar } from '../../components/SearchBar';
@@ -27,30 +28,40 @@ export function Home() {
   const [data, setData] = useState<LoginListDataProps>([]);
 
   async function loadData() {
-    const dataKey = '@savepass:logins';
-    const response = await AsyncStorage.getItem(dataKey);
-
-    if (response) {
-      const parsedData = JSON.parse(response);
+    try {
+      const dataKey = '@savepass:logins';
+      const response = await AsyncStorage.getItem(dataKey);
+      const parsedData = response ? JSON.parse(response) : [];
 
       setSearchListData(parsedData);
       setData(parsedData);
+    } catch (err) {
+      console.log(err);
+      Alert.alert('Não foi possível buscar');
     }
   }
 
   function handleFilterLoginData() {
-    const filteredData = searchListData.filter((data) => {
-      if (data.service_name.includes(searchText)) {
-        return data;
-      }
-    });
-    setSearchListData(filteredData);
+    if (searchText.trim()) {
+      const filteredData = searchListData.filter((data) => {
+        const isValid = data.service_name
+          .toLowerCase()
+          .includes(searchText.toLowerCase());
+
+        if (isValid) {
+          return data;
+        }
+      });
+      setSearchListData(filteredData);
+    }
   }
 
   function handleChangeInputText(text: string) {
-    if (!text.trim) {
-      setSearchText(text);
+    if (!text) {
+      setSearchListData(data);
     }
+
+    setSearchText(text);
   }
 
   useFocusEffect(

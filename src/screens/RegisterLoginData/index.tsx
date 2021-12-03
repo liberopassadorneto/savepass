@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import uuid from 'react-native-uuid';
 import * as Yup from 'yup';
@@ -43,17 +43,24 @@ export function RegisterLoginData() {
       ...formData,
     };
 
-    const dataKey = '@savepass:logins';
+    try {
+      const dataKey = '@savepass:logins';
+      const response = await AsyncStorage.getItem(dataKey);
+      const parsedData = response ? JSON.parse(response) : [];
 
-    const response = await AsyncStorage.getItem(dataKey);
-    const parsedData = JSON.parse(response) || [];
+      const newLoginListData = [...parsedData, newLoginData];
+      await AsyncStorage.setItem(dataKey, JSON.stringify(newLoginListData));
 
-    const newLoginListData = [...parsedData, newLoginData];
-
-    await AsyncStorage.setItem(dataKey, JSON.stringify(newLoginListData));
-
-    // navigate('Home');
+      navigate('Home');
+    } catch (err) {
+      console.log(err);
+      Alert.alert('Não foi possível salvar');
+    }
   }
+
+  // useEffect(() => {
+  //   AsyncStorage.removeItem('@savepass:logins');
+  // }, []);
 
   return (
     <KeyboardAvoidingView
